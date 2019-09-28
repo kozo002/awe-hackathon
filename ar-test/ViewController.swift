@@ -25,6 +25,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
     let thumbImageView = UIImageView()
     let motionManager = CMMotionManager()
     var angle: Double? = nil
+    var isPenMode = false
+    let block = SCNNode()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -39,6 +41,11 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
         
         self.mrBlackNode = SCNNode()
         self.mrBlackNode!.geometry = SCNBox(width: mrBlack.size.width * 0.00004, height: mrBlack.size.height * 0.00004, length: 0.0001, chamferRadius: 0)
+        
+        self.block.geometry = SCNBox(width: 0.004, height: 0.004, length: 0.004, chamferRadius: 0)
+        let blockmaterial = SCNMaterial()
+        blockmaterial.diffuse.contents = UIColor.blue // 表面の色は、ランダムで指定する
+        block.geometry?.materials = [blockmaterial]
         
 //        let material = SCNMaterial()
 //        material.diffuse.contents = mrBlack // 表面の色は、ランダムで指定する
@@ -137,9 +144,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
         guard let location = location else { return }
         guard isTouching else { return }
         
-        if isPasted { return }
-        isPasted = true
-        let clone = mrBlackNode!.clone()
+//        if isPasted && !isPenMode { return }
+//        isPasted = true
+        let clone = isPenMode ? block.clone() : mrBlackNode!.clone()
         
         if let camera = sceneView.pointOfView {
             print("----> test \(camera.position.z - 1)")
@@ -170,6 +177,8 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
     
     func imagePickerController(_ picker: UIImagePickerController,
                                didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]){
+        isPenMode = false
+        isPasted = false
         // 画像選択時の処理
         // ↓選んだ画像を取得
         if let selected = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
@@ -191,11 +200,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
     }
 
     @IBAction func penAction(_ sender: Any) {
-        self.mrBlackNode = SCNNode()
-        self.mrBlackNode!.geometry = SCNBox(width: mrBlack.size.width * 0.00000004, height: mrBlack.size.height * 0.00000004, length: 0.0000001, chamferRadius: 0)
-        
-        let material = SCNMaterial()
-        material.diffuse.contents = mrBlack // 表面の色は、ランダムで指定する
-        self.mrBlackNode!.geometry?.materials = [material] // 表面の情報をノードに適用
+        isPenMode = !isPenMode
+//        self.mrBlackNode = SCNNode()
+//        self.mrBlackNode!.geometry = SCNBox(width: mrBlack.size.width * 0.00004, height: mrBlack.size.height * 0.00004, length: 0.0000001, chamferRadius: 0)
+//
+//        let material = SCNMaterial()
+//        material.diffuse.contents = mrBlack // 表面の色は、ランダムで指定する
+//        self.mrBlackNode!.geometry?.materials = [material] // 表面の情報をノードに適用
     }
 }
