@@ -15,41 +15,13 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     var isTouching: Bool = false
+    var isPasted: Bool = false
     var location: CGPoint? = nil
     let mrBlack = UIImage(named: "black-cropped")!
     var mrBlackNode: SCNNode? = nil
     var isCaptureMode = false
     let thumbImageView = UIImageView()
     
-    let motion = CMMotionManager()
-    var timer: Timer? = nil
-    var motionX: Double? = nil
-    var motionY: Double? = nil
-    var motionZ: Double? = nil
-    
-    func startAccelerometers() {
-       // Make sure the accelerometer hardware is available.
-       if self.motion.isAccelerometerAvailable {
-          self.motion.accelerometerUpdateInterval = 1.0 / 60.0  // 60 Hz
-          self.motion.startAccelerometerUpdates()
-
-          // Configure a timer to fetch the data.
-          self.timer = Timer(fire: Date(), interval: (1.0/60.0),
-                repeats: true, block: { (timer) in
-             // Get the accelerometer data.
-             if let data = self.motion.accelerometerData {
-                self.motionX = data.acceleration.x
-                self.motionY = data.acceleration.y
-                self.motionZ = data.acceleration.z
-
-                // Use the accelerometer data in your app.
-             }
-          })
-
-          // Add the timer to the current run loop.
-          RunLoop.current.add(self.timer!, forMode: RunLoop.Mode.default)
-       }
-    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -72,8 +44,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 //        self.mrBlackNode.position = SCNVector3(0, 0, -0.5) // ノードの位置は、原点から左右：0m 上下：0m　奥に50cmとする
 //        node.rotation = SCNVector4(x: 0, y: -30, z: -5, w: 20)
 //        sceneView.scene.rootNode.addChildNode(node)
-        
-
         
         
         if isCaptureMode {
@@ -157,18 +127,19 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         isTouching = false
+        isPasted = false
     }
     
     func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
 //        if isCaptureMode { return }
         guard isTouching else { return }
         guard let location = location else { return }
+        if isPasted { return }
+        isPasted = true
         let clone = mrBlackNode!.clone()
         let worldPosition = sceneView.unprojectPoint(SCNVector3(location.x, location.y, 0.995))
         clone.position = worldPosition
-        if let motionX = motionX, let motionY = motionY, let motionZ = motionZ {
-            clone.rotation = SCNVector4(motionX * 10, motionY * 10, motionZ * 10, 50)
-        }
+
         sceneView.scene.rootNode.addChildNode(clone)
     }
 }
