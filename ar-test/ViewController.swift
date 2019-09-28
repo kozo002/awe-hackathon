@@ -15,6 +15,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
 
     @IBOutlet var sceneView: ARSCNView!
     @IBOutlet weak var photoButton: UIButton!
+    @IBOutlet weak var penButton: UIButton!
     var isTouching: Bool = false
     var isPasted: Bool = false
     var location: CGPoint? = nil
@@ -24,7 +25,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
     let thumbImageView = UIImageView()
     let motionManager = CMMotionManager()
     var angle: Double? = nil
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -188,5 +188,14 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         // キャンセルボタンを押下時の処理
         picker.dismiss(animated: true, completion: nil)
+    }
+
+    @IBAction func penAction(_ sender: Any) {
+        self.mrBlackNode = SCNNode()
+        self.mrBlackNode!.geometry = SCNBox(width: mrBlack.size.width * 0.00000004, height: mrBlack.size.height * 0.00000004, length: 0.0000001, chamferRadius: 0)
+        
+        let material = SCNMaterial()
+        material.diffuse.contents = mrBlack // 表面の色は、ランダムで指定する
+        self.mrBlackNode!.geometry?.materials = [material] // 表面の情報をノードに適用
     }
 }

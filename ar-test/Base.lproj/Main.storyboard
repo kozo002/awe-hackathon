@@ -26,6 +26,14 @@
                                     <action selector="selectPhoto:" destination="BV1-FR-VrT" eventType="touchUpInside" id="Qvm-8R-Zbh"/>
                                 </connections>
                             </button>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Sgf-2R-dji">
+                                <rect key="frame" x="47" y="783" width="31" height="30"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="ペン"/>
+                                <connections>
+                                    <action selector="penAction:" destination="BV1-FR-VrT" eventType="touchUpInside" id="fLT-z3-7b7"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
                         <constraints>
@@ -37,6 +45,7 @@
                         <viewLayoutGuide key="safeArea" id="fQZ-KI-GVf"/>
                     </view>
                     <connections>
+                        <outlet property="penButton" destination="Sgf-2R-dji" id="GEN-Dm-lmN"/>
                         <outlet property="photoButton" destination="RQT-3D-Lfc" id="rrd-nw-hrK"/>
                         <outlet property="sceneView" destination="BrB-h1-WRS" id="5nT-qQ-ynl"/>
                     </connections>
