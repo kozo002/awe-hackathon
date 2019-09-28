@@ -55,7 +55,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
                 if let attitude = motion?.attitude {
                     // Get the pitch (in radians) and convert to degrees.
                     // Import Darwin to get M_PI in Swift
-                    self?.angle = attitude.roll * Double(180.0/Float.pi)
+                    self?.angle = attitude.roll
                 }
 
             })
@@ -144,12 +144,18 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
         if let camera = sceneView.pointOfView {
             print("----> test \(camera.position.z - 1)")
 //            let worldPosition = SCNVector3(camera.position.x, camera.position.y, camera.position.z - 1)
-            let worldPosition = sceneView.unprojectPoint(SCNVector3(location.x, location.y, 0.99))
-            clone.position = worldPosition
-            if let angle = angle {
-                print("---> angle \(angle)")
-                clone.rotation = SCNVector4(0,1,0,angle)
-            }
+//            let worldPosition = sceneView.unprojectPoint(SCNVector3(location.x, location.y, 0.99))
+//            clone.position = worldPosition
+            clone.eulerAngles = camera.eulerAngles
+            
+            let infrontOfCamera = SCNVector3(x: 0, y: 0, z: -0.1)
+            let pointInWorld = camera.convertPosition(infrontOfCamera, to: nil)
+            var screenPos = sceneView.projectPoint(pointInWorld)
+            screenPos.x = Float(location.x)
+            screenPos.y = Float(location.y)
+            let finalPosition = sceneView.unprojectPoint(screenPos)
+            clone.position = finalPosition
+            
             sceneView.scene.rootNode.addChildNode(clone)
         }
         
@@ -170,7 +176,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
             self.mrBlack = selected
             
             self.mrBlackNode = SCNNode()
-            self.mrBlackNode!.geometry = SCNBox(width: mrBlack.size.width * 0.00004, height: mrBlack.size.height * 0.00004, length: 0.0001, chamferRadius: 0)
+            self.mrBlackNode!.geometry = SCNBox(width: mrBlack.size.width * 0.00004, height: mrBlack.size.height * 0.00004, length: 0.0005, chamferRadius: 0)
             
             let material = SCNMaterial()
             material.diffuse.contents = mrBlack // 表面の色は、ランダムで指定する
