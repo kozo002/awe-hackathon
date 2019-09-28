@@ -10,8 +10,9 @@ import UIKit
 import SceneKit
 import ARKit
 import CoreMotion
+import MultipeerConnectivity
 
-class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, ARSessionDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     @IBOutlet weak var photoButton: UIButton!
@@ -27,9 +28,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
     var angle: Double? = nil
     var isPenMode = false
     let block = SCNNode()
+    var multipeerSession: MultipeerSession!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        multipeerSession = MultipeerSession(receivedDataHandler: receivedData)
         
         // Set the view's delegate
         sceneView.delegate = self
@@ -68,6 +72,46 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
             })
 
             print("Device motion started")
+        }
+        
+        
+    }
+    
+    func shareSession() {
+        sceneView.session.getCurrentWorldMap { worldMap, error in
+            guard let map = worldMap
+                else { print("Error: \(error!.localizedDescription)"); return }
+            guard let data = try? NSKeyedArchiver.archivedData(withRootObject: map, requiringSecureCoding: true)
+                else { fatalError("can't encode map") }
+            self.multipeerSession.sendToAllPeers(data)
+        }
+    }
+    
+    var mapProvider: MCPeerID?
+    
+    func receivedData(_ data: Data, from peer: MCPeerID) {
+        
+        do {
+            if let worldMap = try NSKeyedUnarchiver.unarchivedObject(ofClass: ARWorldMap.self, from: data) {
+                // Run the session with the received world map.
+                let configuration = ARWorldTrackingConfiguration()
+                configuration.planeDetection = .horizontal
+                configuration.initialWorldMap = worldMap
+                sceneView.session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
+                
+                // Remember who provided the map for showing UI feedback.
+                mapProvider = peer
+            }
+            else
+            if let anchor = try NSKeyedUnarchiver.unarchivedObject(ofClass: ARAnchor.self, from: data) {
+                // Add anchor to the session, ARSCNView delegate adds visible content.
+                sceneView.session.add(anchor: anchor)
+            }
+            else {
+                print("unknown data recieved from \(peer)")
+            }
+        } catch {
+            print("can't decode data recieved from \(peer)")
         }
     }
     
@@ -164,6 +208,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControll
             clone.position = finalPosition
             
             sceneView.scene.rootNode.addChildNode(clone)
+            shareSession()
         }
         
         
