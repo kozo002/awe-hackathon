@@ -11,16 +11,17 @@ import SceneKit
 import ARKit
 import CoreMotion
 
-class ViewController: UIViewController, ARSCNViewDelegate {
+class ViewController: UIViewController, ARSCNViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     var isTouching: Bool = false
     var location: CGPoint? = nil
-    let mrBlack = UIImage(named: "black-cropped")!
+    var mrBlack = UIImage(named: "black-cropped")!
     var mrBlackNode: SCNNode? = nil
     var isCaptureMode = false
     let thumbImageView = UIImageView()
     
+    @IBOutlet weak var photoButton: UIButton!
     let motion = CMMotionManager()
     var timer: Timer? = nil
     var motionX: Double? = nil
@@ -68,27 +69,11 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         let material = SCNMaterial()
         material.diffuse.contents = mrBlack // 表面の色は、ランダムで指定する
         self.mrBlackNode!.geometry?.materials = [material] // 表面の情報をノードに適用
-        
-//        self.mrBlackNode.position = SCNVector3(0, 0, -0.5) // ノードの位置は、原点から左右：0m 上下：0m　奥に50cmとする
-//        node.rotation = SCNVector4(x: 0, y: -30, z: -5, w: 20)
-//        sceneView.scene.rootNode.addChildNode(node)
-        
-
-        
-        
-        if isCaptureMode {
-            let singleTapRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleSceneViewTap))
-            sceneView.addGestureRecognizer(singleTapRecognizer)
-            thumbImageView.frame = CGRect(x: 16, y: 40, width: self.view.frame.size.width / 4, height: self.view.frame.size.height / 4)
-            self.view.addSubview(thumbImageView)
-        }
-        
-        
     }
     
     @objc func handleSceneViewTap(sender: UITapGestureRecognizer) {
-        let snapshot = sceneView.snapshot()
-        thumbImageView.image = snapshot
+//        let snapshot = sceneView.snapshot()
+//        thumbImageView.image = snapshot
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -130,18 +115,12 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 */
     
     func session(_ session: ARSession, didFailWithError error: Error) {
-        // Present an error message to the user
-        
     }
     
     func sessionWasInterrupted(_ session: ARSession) {
-        // Inform the user that the session has been interrupted, for example, by presenting an overlay
-        
     }
     
     func sessionInterruptionEnded(_ session: ARSession) {
-        // Reset tracking and/or remove existing anchors if consistent tracking is required
-        
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -164,11 +143,42 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         guard isTouching else { return }
         guard let location = location else { return }
         let clone = mrBlackNode!.clone()
-        let worldPosition = sceneView.unprojectPoint(SCNVector3(location.x, location.y, 0.995))
-        clone.position = worldPosition
-        if let motionX = motionX, let motionY = motionY, let motionZ = motionZ {
-            clone.rotation = SCNVector4(motionX * 10, motionY * 10, motionZ * 10, 50)
+        if let camera = sceneView.pointOfView {
+            let worldPosition = SCNVector3(camera.position.x, camera.position.y, camera.position.z - 1)
+            clone.position = worldPosition
+            print(clone.position)
+            if let motionX = motionX, let motionY = motionY, let motionZ = motionZ {
+                clone.rotation = SCNVector4(motionX * 10, motionY * 10, motionZ * 10, 50)
+            }
+            sceneView.scene.rootNode.addChildNode(clone)
         }
-        sceneView.scene.rootNode.addChildNode(clone)
+    }
+    
+    @IBAction func selectPhoto(_ sender: Any) {
+        let picker = UIImagePickerController()
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController,
+                               didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]){
+        // 画像選択時の処理
+        // ↓選んだ画像を取得
+        if let selected = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
+            self.mrBlack = selected
+            
+            self.mrBlackNode = SCNNode()
+            self.mrBlackNode!.geometry = SCNBox(width: mrBlack.size.width * 0.0004, height: mrBlack.size.height * 0.0004, length: 0.0001, chamferRadius: 0)
+            
+            let material = SCNMaterial()
+            material.diffuse.contents = mrBlack // 表面の色は、ランダムで指定する
+            self.mrBlackNode!.geometry?.materials = [material] // 表面の情報をノードに適用
+        }
+        picker.dismiss(animated: true, completion: nil)
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        // キャンセルボタンを押下時の処理
+        picker.dismiss(animated: true, completion: nil)
     }
 }
